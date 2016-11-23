@@ -1,0 +1,10 @@
+name: ShinyApp
+title:
+account: aiedward
+server: shinyapps.io
+appId: 139767
+bundleId: 624045
+url: https://aiedward.shinyapps.io/ShinyApp/
+when: 1479943731.37495
+asMultiple: FALSE
+asStatic: FALSE
