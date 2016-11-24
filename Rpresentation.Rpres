@@ -1,6 +1,6 @@
 USArrests based shiny app on murder, assault and rape crime rates
 ========================================================
-author: Edward
+author: Edward Cheng
 date: `r date()`
 autosize: true
 font-family: 'Helvetica'

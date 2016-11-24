@@ -150,5 +150,5 @@ shinyServer(function(input,output){
 *This Shiny App has 2 parts, a drop-down box which is on the left panel and a main panel on the right.  \n
 *The drop-down box facilitates the user to choose three different crime rates in the USA. \n 
 *Based on the selection in the drop-down menu, it is possible to see the associated data, map, regression plot and linear regression diagnostics on the tabs in the main panel on the right hand side. \n
-*The code associated with this app and the presentation slides can be found in ui.R, server.R and Rpresentation.Rpres in the following repository: https://github.com/sadiqiqbal/ShinyAppProject.git.              ")})
+*The code associated with this app and the presentation slides can be found in ui.R, server.R and Rpresentation.Rpres in the following repository: https://github.com/aiedward/ShinyApp.git             ")})
 })
