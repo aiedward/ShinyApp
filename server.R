@@ -1,154 +1,54 @@
-#
-# This is the server logic of a Shiny web application. You can run the 
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
+# set up work
 
-setwd("C:/Users/Edward/Documents/GitHub/ShinyApp")
+#setwd("C:/Users/Edward/Desktop/ShinyAppProject-master")
 
 library(shiny)
 library(ggplot2)
-library(gridExtra)
-library(cowplot)
-library(splines2)
-library(MASS)
+library(plyr)
 
-# Define server logic 
-shinyServer(function(input,output){
+nba <- read.csv("nba_atleast100threes.csv", stringsAsFactors = FALSE)
+nba <- nba[order(nba$name),]
+nba$shot_made_flag <- as.factor(nba$shot_made_flag) # 0 for missed, 1 for made
+nba$shot_clock <- as.numeric(nba$shot_clock) # divide this into intervals
+nba$shotClkInt <- round_any(nba$shot_clock / 6, 1, f=floor) # 4 intervals
+nba$shotClkInt[nba$shotClkInt==4] <- 3 # make shot clock of 24, fit into interval 3
+nba$shotClkInt <- as.factor(nba$shotClkInt)
+nba$dribbles <- as.numeric(nba$dribbles)
+nba$shot_distance <- as.numeric(nba$shot_distance)
+
+# server #
+shinyServer(function(input, output) {
     
-    output$Data<-renderTable({
-        x<-as.numeric(USArrests[,as.numeric(input$var)]);
-        Urban_Population<-as.numeric(USArrests$UrbanPop);
-        if(as.numeric(input$var) == 1) 
-        {Murder <- x; data.frame(Murder,Urban_Population)}
-        else if(as.numeric(input$var) == 2) 
-        {Assault <- x; data.frame(Assault,Urban_Population)}
-        else if (as.numeric(input$var) == 4) 
-        {Rape <- x; data.frame(Rape,Urban_Population)}
-                            })
-    
-    output$Map<- renderPlot({
-        us <- map_data("state")
-        if(as.numeric(input$var) == 1)
-        {Crimedata <- data.frame(state = tolower(rownames(USArrests)), USArrests)
-        ggplot(Crimedata, aes(map_id = state, fill=Murder)) +
-            geom_map(map = us, colour="black") +     
-            scale_fill_gradientn(colours=c("cyan","thistle2","hotpink","red")) +
-            expand_limits(x = us$long, y = us$lat) +
-            coord_map("bonne", lat0 = 50) +                               
-            theme(
-                panel.border = element_rect(fill = NA, colour = "black"), 
-                panel.grid.major = element_line(colour = "white", size = 1), 
-                panel.grid.minor = element_line(colour = "white", size = 1), 
-                axis.line = element_blank(),
-                axis.ticks = element_blank(), 
-                axis.text.y = element_blank(),
-                axis.text.x = element_blank(),
-                axis.title.x=element_blank(),
-                axis.title.y=element_blank(),
-                legend.position = "bottom",
-                legend.key.size = unit(1.25, "cm"),
-                legend.title = element_text(size = rel(1), face = "bold", hjust = 0, colour = "black"),
-                legend.text = element_text(size = 10, colour = "black", angle = 45),
-                panel.margin =       unit(2, "lines"),
-                panel.background = element_rect(fill = 'gray', colour = 'gray')
-            )
-        }
-        else if (as.numeric(input$var) == 2)
-        {Crimedata <- data.frame(state = tolower(rownames(USArrests)), USArrests)
-        ggplot(Crimedata, aes(map_id = state, fill=Assault)) +
-            geom_map(map = us, colour="black") +     
-            scale_fill_gradientn(colours=c("cyan","thistle2","hotpink","red")) + 
-            expand_limits(x = us$long, y = us$lat) +
-            coord_map("bonne", lat0 = 50) +                               
-            theme(
-                panel.border = element_rect(fill = NA, colour = "black"), 
-                panel.grid.major = element_line(colour = "white", size = 1), 
-                panel.grid.minor = element_line(colour = "white", size = 1), 
-                axis.line = element_blank(),
-                axis.ticks = element_blank(), 
-                axis.text.y = element_blank(),
-                axis.text.x = element_blank(),
-                axis.title.x=element_blank(),
-                axis.title.y=element_blank(),
-                legend.position = "bottom",
-                legend.key.size = unit(1.25, "cm"),
-                legend.title = element_text(size = rel(1), face = "bold", hjust = 0, colour = "black"),
-                legend.text = element_text(size = 10, colour = "black", angle = 45),
-                panel.margin =       unit(2, "lines"),
-                panel.background = element_rect(fill = 'gray', colour = 'gray')
-            )
-        }
-        else if (as.numeric(input$var) == 4)
-        {Crimedata <- data.frame(state = tolower(rownames(USArrests)), USArrests)
-        ggplot(Crimedata, aes(map_id = state, fill=Rape)) +
-            geom_map(map = us, colour="black") +     
-            scale_fill_gradientn(colours=c("cyan","thistle2","hotpink","red")) +
-            expand_limits(x = us$long, y = us$lat) +
-            coord_map("bonne", lat0 = 50) +                               
-            theme(
-                panel.border = element_rect(fill = NA, colour = "black"), 
-                panel.grid.major = element_line(colour = "white", size = 1), 
-                panel.grid.minor = element_line(colour = "white", size = 1), 
-                axis.line = element_blank(),
-                axis.ticks = element_blank(), 
-                axis.text.y = element_blank(),
-                axis.text.x = element_blank(),
-                axis.title.x=element_blank(),
-                axis.title.y=element_blank(),
-                legend.position = "bottom",
-                legend.key.size = unit(1.25, "cm"),
-                legend.title = element_text(size = rel(1), face = "bold", hjust = 0, colour = "black"),
-                legend.text = element_text(size = 10, colour = "black", angle = 45),
-                panel.margin =       unit(2, "lines"),
-                panel.background = element_rect(fill = 'gray', colour = 'gray')
-            )
-        }
+    player <- reactive({
+        input$Select
     })
     
-        output$Crimeplot<- renderPlot({
-        x<-as.numeric(USArrests[,as.numeric(input$var)])
-        y<-as.numeric(USArrests$UrbanPop)
-        if(as.numeric(input$var) == 1)
-        {c1 <- ggplot(USArrests, aes(Murder,UrbanPop)) + stat_smooth(method = "lm", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region 
-        c2 <- ggplot(USArrests, aes(Murder,UrbanPop)) + stat_smooth(method = "lm", formula = y ~ splines::bs(x, 3), fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region
-        c3 <- ggplot(USArrests, aes(Murder,UrbanPop)) + stat_smooth(method = "rlm", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region
-        c4 <- ggplot(USArrests, aes(Murder,UrbanPop)) + stat_smooth(method = "loess", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a loess smoothed fit curve with confidence region
-        plot_grid(c1, c2, c3, c4, labels=c("Linear regression", "Cubic spline regression", "Robust regression", "Locally weighted linear regression"), ncol = 2, nrow = 2, rel_widths = c(1, 1, 1, 1), rel_heights = c(1, 1, 1, 1))
-        }
-        else if (as.numeric(input$var) == 2)
-        {c1 <- ggplot(USArrests, aes(Assault,UrbanPop)) + stat_smooth(method = "lm", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region 
-        c2 <- ggplot(USArrests, aes(Assault,UrbanPop)) + stat_smooth(method = "lm", formula = y ~ splines::bs(x, 3), fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region
-        c3 <- ggplot(USArrests, aes(Assault,UrbanPop)) + stat_smooth(method = "rlm", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region
-        c4 <- ggplot(USArrests, aes(Assault,UrbanPop)) + stat_smooth(method = "loess", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a loess smoothed fit curve with confidence region
-        plot_grid(c1, c2, c3, c4, labels=c("Linear regression", "Cubic spline regression", "Robust regression", "Locally weighted linear regression"), ncol = 2, nrow = 2, rel_widths = c(1, 1, 1, 1), rel_heights = c(1, 1, 1, 1))
-        }
-        else if (as.numeric(input$var) == 4)
-        {c1 <- ggplot(USArrests, aes(Rape,UrbanPop)) + stat_smooth(method = "lm", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region 
-        c2 <- ggplot(USArrests, aes(Rape,UrbanPop)) + stat_smooth(method = "lm", formula = y ~ splines::bs(x, 3), fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region
-        c3 <- ggplot(USArrests, aes(Rape,UrbanPop)) + stat_smooth(method = "rlm", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a linear regression line with confidence region
-        c4 <- ggplot(USArrests, aes(Rape,UrbanPop)) + stat_smooth(method = "loess", fill = "gray", size = 1.5, alpha = 1) + geom_point() # Adds a loess smoothed fit curve with confidence region
-        plot_grid(c1, c2, c3, c4, labels=c("Linear regression", "Cubic spline regression", "Robust regression", "Locally weighted linear regression"), ncol = 2, nrow = 2, rel_widths = c(1, 1, 1, 1), rel_heights = c(1, 1, 1, 1))
-        }
+    shotdist <- reactive({
+        input$Slider1
     })
-        
-        output$Diagnostics<- renderPlot({
-            x<-as.numeric(USArrests[,as.numeric(input$var)])
-            y<-as.numeric(USArrests$UrbanPop)
-            par(mfrow = c(2,3))
-            par(cex = 0.8)
-            lm.out = lm(y ~ x, data=USArrests)
-            plot(lm.out,col="blue")
-            plot(cooks.distance(lm.out),col="blue")
+    
+    output$text <- renderText({
+       paste(player(), "vs. NBA 3-PT Shots of Qualified Players")
     })
-        
-            output$Documentation <-renderText({ 
-            paste("*This is a Shiny App based on USArrests data. \n
-*This Shiny App has 2 parts, a drop-down box which is on the left panel and a main panel on the right.  \n
-*The drop-down box facilitates the user to choose three different crime rates in the USA. \n 
-*Based on the selection in the drop-down menu, it is possible to see the associated data, map, regression plot and linear regression diagnostics on the tabs in the main panel on the right hand side. \n
-*The code associated with this app and the presentation slides can be found in ui.R, server.R and Rpresentation.Rpres in the following repository: https://github.com/aiedward/ShinyApp.git             ")})
+    
+    output$view <- renderPlot({
+        ggplot() + geom_boxplot(data=nba[nba$shot_distance >= shotdist(),], 
+                                aes(shotClkInt, dribbles, fill=shot_made_flag)) +
+            geom_jitter(data=nba[nba$name==player() & nba$shot_distance >= shotdist(),], 
+                        aes(shotClkInt, dribbles, colour=shot_made_flag, shape=shot_made_flag), 
+                        size=5) +
+            scale_fill_discrete(name = "Shot Attempts of Qualified Players", breaks=c("0", "1"),
+                                labels=c("Shots Missed", "Shots Made")) +
+            scale_colour_manual(name = paste0(sub("^(\\w+)\\s?(.*)$", "\\2", player()), "Shot Attempts"), 
+                                breaks=c(0, 1), labels=c("Shot Missed", "Shot Made"),
+                                values=c("brown", "green")) +
+            scale_shape_manual(name = paste0(sub("^(\\w+)\\s?(.*)$", "\\2", player()), "Shot Attempts"), 
+                               breaks=c(0, 1), labels=c("Shot Missed", "Shot Made"),
+                               values=c(4, 19)) +
+            scale_x_discrete(name="Shot Clock Intervals (seconds)", 
+                             labels=c("0-6", "7-12", "13-18", "19-24")) +
+            scale_y_discrete(name="Number of Dribbles Before Shot Attempt") + ylim(c(0, 35)) +
+            theme(axis.title.x=element_text(size=18), axis.text.x=element_text(size=13),
+                  axis.title.y=element_text(size=18), axis.text.y=element_text(size=13))
+    })
 })
