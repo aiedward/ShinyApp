@@ -8,7 +8,11 @@ slider for the minimal shot distance that the 3-pt shots
 were taken from. 
 
 My shiny app can be found here:
+<<<<<<< HEAD
 https://aiedward.shinyapps.io/ShinyApp
+=======
+https://aiedward.shinyapps.io/ShinyApp/
+>>>>>>> origin/master
 
 My presentation can be found here:
 http://rpubs.com/aiedward/shinyapp
